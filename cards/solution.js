@@ -1,3 +1,4 @@
+// 1st problem of https://www.youtube.com/shorts/NTCRFASmSlA
 const solve = (xs, ys) => {
   const map = {}
   for (let i = 0; i < xs.length; ++i) {
@@ -25,7 +26,7 @@ const solve = (xs, ys) => {
     }
   }
 
-  throw 69
+  return 100_001
 }
 
 ;[
