@@ -6,9 +6,9 @@
  * @returns {number}
  */
 const activityNotifications = (xs, d) => {
-  const map = new Uint32Array(201)
+  const freqs = new Uint32Array(201)
   for (let i = 0; i < d; ++i)
-    map[xs[i]] = (map[xs[i]] | 0) + 1
+    ++freqs[xs[i]]
 
   const left_mid = (d + 1) >> 1
   const right_mid = left_mid + 1
@@ -17,14 +17,14 @@ const activityNotifications = (xs, d) => {
     let j = -1
     let count = 0
     while (count < left_mid) {
-      count += map[++j]
+      count += freqs[++j]
     }
 
     const left = j
 
     if (d % 2 === 0) {
       while (count < right_mid) {
-        count += map[++j]
+        count += freqs[++j]
       }
     }
 
@@ -32,8 +32,8 @@ const activityNotifications = (xs, d) => {
       ++result
     }
 
-    map[xs[i]] = (map[xs[i]] | 0) + 1
-    --map[xs[i - d]]
+    freqs[xs[i]] = (freqs[xs[i]] | 0) + 1
+    --freqs[xs[i - d]]
   }
 
   return result
