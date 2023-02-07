@@ -1,3 +1,5 @@
+// https://www.hackerrank.com/challenges/lilys-homework/problem
+
 /**
  * @param {number[]} xs
  * @returns {number}
