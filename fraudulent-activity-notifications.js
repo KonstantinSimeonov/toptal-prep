@@ -10,29 +10,26 @@ const activityNotifications = (xs, d) => {
   for (let i = 0; i < d; ++i)
     ++freqs[xs[i]]
 
-  const left_mid = (d + 1) >> 1
-  const right_mid = left_mid + 1
+  const mid = (d + 1) >> 1
   let result = 0
   for (let i = d; i < xs.length; ++i) {
     let j = -1
     let count = 0
-    while (count < left_mid) {
+    while (count < mid) {
       count += freqs[++j]
     }
 
     const left = j
 
     if (d % 2 === 0) {
-      while (count < right_mid) {
+      while (count <= mid) {
         count += freqs[++j]
       }
     }
 
-    if (xs[i] >= j + left) {
-      ++result
-    }
+    result += (xs[i] >= j + left) | 0
 
-    freqs[xs[i]] = (freqs[xs[i]] | 0) + 1
+    ++freqs[xs[i]]
     --freqs[xs[i - d]]
   }
 
