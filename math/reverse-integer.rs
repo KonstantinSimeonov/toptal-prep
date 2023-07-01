@@ -9,7 +9,7 @@ fn reverse(x: i32) -> i32 {
         n /= 10;
     }
 
-    i32::try_from(res).ok().unwrap_or(0)
+    i32::try_from(res).unwrap_or(0)
 }
 
 fn main() {
