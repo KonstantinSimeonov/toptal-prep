@@ -60,7 +60,7 @@ impl Solution {
                 tab[i][j] = match tokens[i - 1] {
                     RegToken::Any => tab[i - 1][j - 1],
                     RegToken::AnyMany => tab[i - 1][j - 1] || tab[i - 1][j] || tab[i][j - 1],
-                    RegToken::Letter(x) => tab[i - 1][j - 1] && (x as u8) == bytes[j - 1],
+                    RegToken::Letter(x) => tab[i - 1][j - 1] && x as u8 == bytes[j - 1],
                     RegToken::LetterMany(x) =>
                         // match or continue matching
                         ((tab[i][j - 1] || tab[i - 1][j - 1]) && x as u8 == bytes[j - 1])
