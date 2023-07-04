@@ -4,28 +4,28 @@ struct Solution {}
 
 #[derive(Debug)]
 enum RegToken {
-    Letter(char),
-    LetterMany(char),
+    Letter(u8),
+    LetterMany(u8),
     Any,
     AnyMany,
 }
 
 impl RegToken {
     pub fn from_str(s: &str) -> Vec<RegToken> {
-        let cs = s.chars().collect::<Vec<_>>();
+        let bytes = s.as_bytes();
         let mut i = 0;
         let mut tokens = vec![];
         while i < s.len() {
-            let t = match (cs[i], cs.get(i + 1).unwrap_or(&'_')) {
-                ('.', '*') => {
+            let t = match (bytes[i], bytes.get(i + 1).unwrap_or(&0)) {
+                (b'.', b'*') => {
                     i += 2;
                     RegToken::AnyMany
                 }
-                ('.', _) => {
+                (b'.', _) => {
                     i += 1;
                     RegToken::Any
                 }
-                (x, '*') => {
+                (x, b'*') => {
                     i += 2;
                     RegToken::LetterMany(x)
                 }
@@ -42,38 +42,60 @@ impl RegToken {
     }
 }
 
-fn test(ts: &Vec<RegToken>, s: &str, it: usize, is: usize) -> bool {
-    //println!("called {} {}", it, is);
+impl Solution {
+    pub fn is_match(s: String, p: String) -> bool {
+        let bytes = s.as_bytes();
+        let tokens = RegToken::from_str(&p);
+        let mut tab = vec![vec![false; s.len() + 1]; tokens.len() + 1];
+
+        tab[0][0] = true;
+
+        for i in 1..tab.len() {
+            tab[i][0] = tab[i - 1][0] && match tokens[i - 1] {
+                RegToken::AnyMany | RegToken::LetterMany(_) => true,
+                _ => false
+            };
+
+            for j in 1..tab[i].len() {
+                tab[i][j] = match tokens[i - 1] {
+                    RegToken::Any => tab[i - 1][j - 1],
+                    RegToken::AnyMany => tab[i - 1][j - 1] || tab[i - 1][j] || tab[i][j - 1],
+                    RegToken::Letter(x) => tab[i - 1][j - 1] && (x as u8) == bytes[j - 1],
+                    RegToken::LetterMany(x) =>
+                        // match or continue matching
+                        ((tab[i][j - 1] || tab[i - 1][j - 1]) && x as u8 == bytes[j - 1])
+                        // zero matches
+                        || tab[i - 1][j]
+                }
+            }
+        }
+
+        *tab.last().unwrap().last().unwrap()
+    }
+}
+
+// leaving this here as a testament to my stupidity
+fn is_match_rec(ts: &Vec<RegToken>, s: &str, it: usize, is: usize) -> bool {
+    let bytes = s.as_bytes();
     if it >= ts.len() {
-        //println!("return");
         return is == s.len();
     }
 
     match ts[it] {
         RegToken::Letter(x) => {
 
-            if s.chars().skip(is).take(1).any(|c| c == x) {
-                //println!(
-                //   "Letter => {} {}",
-                //   it + 1,
-                //   is + 1
-                //);
-                test(ts, s, it + 1, is + 1)
+            if bytes.iter().skip(is).take(1).any(|&c| c == x) {
+                is_match_rec(ts, s, it + 1, is + 1)
             } else {
-                //println!("Letter => failed");
                 false
             }
         }
         RegToken::LetterMany(x) => {
-            let mut xs = s.chars().skip(is).take_while(|c| *c == x).zip(is + 1..);
-
-            //println!("Letter Many => {:?} {:?}", (it + 1, is), xs.clone().collect::<Vec<_>>());
-
-            test(ts, s, it + 1, is) || xs.any(|(_, new_is)| test(ts, s, it + 1, new_is))
+            let mut xs = bytes.iter().skip(is).take_while(|&&c| c == x).zip(is + 1..);
+            is_match_rec(ts, s, it + 1, is) || xs.any(|(_, new_is)| is_match_rec(ts, s, it + 1, new_is))
         }
         RegToken::Any => {
-            //println!("Any => {} {}", it + 1, is + 1);
-            test(ts, s, it + 1, is + 1)
+            is_match_rec(ts, s, it + 1, is + 1)
         },
         RegToken::AnyMany => {
             let mut xs = s
@@ -81,17 +103,8 @@ fn test(ts: &Vec<RegToken>, s: &str, it: usize, is: usize) -> bool {
                 .skip(is)
                 .zip(is + 1..);
 
-            //println!("AnyMany => {} {:?}", it, xs.clone().collect::<Vec<_>>());
-
-            test(ts, s, it + 1, is) || xs.any(|(_, new_is)| test(ts, s, it + 1, new_is))
+            is_match_rec(ts, s, it + 1, is) || xs.any(|(_, new_is)| is_match_rec(ts, s, it + 1, new_is))
         }
-    }
-}
-
-impl Solution {
-    pub fn is_match(s: String, p: String) -> bool {
-        let ts = RegToken::from_str(&p);
-        test(&ts, &s, 0, 0)
     }
 }
 
@@ -109,10 +122,14 @@ fn main() {
         ("a", ".*..a*"),
         ("ab", ".*..")
     ] {
-        println!("\n\n{} {} {:?}", s, p, RegToken::from_str(p));
+        let ts = RegToken::from_str(p);
+        println!("\n{} {} {:?}", s, p, ts);
+        let expected = is_match_rec(&ts, s, 0, 0);
+        let actual = Solution::is_match(s.to_string(), p.to_string());
         println!(
-            "{}",
-            Solution::is_match(s.to_string(), p.to_string())
+            "result: {}, passes: {}",
+            actual,
+            actual == expected
         )
     }
 }
