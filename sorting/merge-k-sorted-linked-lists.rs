@@ -19,33 +19,21 @@ impl Solution {
     pub fn merge_k_lists(lists: Vec<Option<Box<ListNode>>>) -> Option<Box<ListNode>> {
         let mut heap = lists
             .into_iter()
-            .filter_map(|node| node.map(|l| cmp::Reverse(l)))
+            .filter_map(|node| node.map(cmp::Reverse))
             .collect::<BinaryHeap<_>>();
 
-        let mut head = match heap.pop() {
-            Some(node) => {
-                let ListNode { val, next } = *node.0;
-                if let Some(rest) = next {
-                    heap.push(cmp::Reverse(rest));
-                }
+        let mut head: Option<Box<ListNode>> = None;
+        let mut last = &mut head;
 
-                Box::new(ListNode::new(val))
-            }
-            None => return None,
-        };
-
-        let mut tail = &mut head;
-
-        while let Some(x) = heap.pop() {
-            if let Some(rest) = x.0.next {
+        while let Some(cmp::Reverse(mut smallest_list)) = heap.pop() {
+            if let Some(rest) = smallest_list.next.take() {
                 heap.push(cmp::Reverse(rest));
             }
 
-            tail.next = Some(Box::new(ListNode::new(x.0.val)));
-            tail = tail.next.as_mut().unwrap()
+            last = &mut last.insert(smallest_list).as_mut().next
         }
 
-        Some(head)
+        head
     }
 }
 
